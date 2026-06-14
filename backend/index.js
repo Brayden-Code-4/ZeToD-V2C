@@ -1,4 +1,5 @@
-
+require('./instrument.js');
+const Sentry = require('@sentry/node');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -22,19 +23,25 @@ app.use('/api/auth', authLimiter, authRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'ZeToD API is live!', status: 'running' });
-  });
+});
 
-  app.get('/health', (req, res) => {
-    res.json({ status: 'healthy' });
-    });
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy' });
+});
 
-    app.use((err, req, res, next) => {
-      console.error(err.stack);
-        res.status(500).json({ error: 'Something went wrong' });
-        });
+app.get('/debug-sentry', function (req, res) {
+  throw new Error('My first Sentry error!');
+});
 
-        app.listen(PORT, () => {
-          console.log(`ZeToD server running on port ${PORT}`);
-          });
+Sentry.setupExpressErrorHandler(app);
 
-          module.exports = app;
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong' });
+});
+
+app.listen(PORT, () => {
+  console.log(`ZeToD server running on port ${PORT}`);
+});
+
+module.exports = app;

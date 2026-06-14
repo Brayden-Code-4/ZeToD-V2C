@@ -75,4 +75,34 @@ router.post('/register', async (req, res) => {
                                                                                                                                                                                                                                   }
                                                                                                                                                                                                                                   });
 
+router.post('/oauth/session', async (req, res) => {
+  try {
+    const { access_token } = req.body;
+
+    if (!access_token) {
+      return res.status(400).json({ error: 'Access token required' });
+    }
+
+    const { data: { user }, error } = await supabase.auth.getUser(access_token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(200).json({
+      message: 'OAuth login successful',
+      user: { id: user.id, email: user.email },
+      token,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
                                                                                                                                                                                                                                   module.exports = router;
